@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIDA Relationship Intelligence™</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  :root {
+    --verde:#1A3C2E;--verde-medio:#2E5C46;--verde-claro:#3D7A5E;
+    --dourado:#f8e38c;--dourado-deep:#d7ae4d;
+    --branco:#FFFFFF;--off-white:#F5F5F2;--cinza-suave:#E8E6E0;
+    --cinza-texto:#6B6B6B;--texto:#1A1A1A;
+    --erro:#C0392B;--alerta:#E67E22;--sucesso:#27AE60;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:var(--off-white);color:var(--texto);min-height:100vh;font-size:15px;line-height:1.6;}
+  #sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--verde);display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+  .sidebar-brand{padding:28px 24px 20px;border-bottom:1px solid rgba(248,227,140,.15);}
+  .brand-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--dourado);line-height:1.25;}
+  .brand-sub{font-size:.72rem;color:rgba(248,227,140,.55);margin-top:4px;letter-spacing:.04em;text-transform:uppercase;}
+  .nav-section{padding:16px 0 8px;}
+  .nav-section-label{font-size:.62rem;font-weight:600;color:rgba(248,227,140,.4);letter-spacing:.12em;text-transform:uppercase;padding:0 24px 8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;cursor:pointer;transition:all .18s;font-size:.875rem;color:rgba(255,255,255,.72);border-left:3px solid transparent;text-decoration:none;}
+  .nav-item:hover{background:rgba(248,227,140,.08);color:var(--dourado);border-left-color:rgba(248,227,140,.3);}
+  .nav-item.active{background:rgba(248,227,140,.12);color:var(--dourado);border-left-color:var(--dourado);font-weight:500;}
+  .nav-icon{font-size:1rem;width:18px;text-align:center;}
+  .sidebar-footer{margin-top:auto;padding:16px 24px;border-top:1px solid rgba(248,227,140,.1);font-size:.72rem;color:rgba(248,227,140,.3);line-height:1.5;}
+  #main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column;}
+  #topbar{background:var(--branco);border-bottom:1px solid var(--cinza-suave);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--verde);}
+  .topbar-right{display:flex;align-items:center;gap:16px;}
+  .sync-btn{background:var(--verde);color:var(--dourado);border:none;padding:7px 18px;border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:background .18s;display:flex;align-items:center;gap:7px;}
+  .sync-btn:hover{background:var(--verde-medio);}
+  .sync-status{font-size:.78rem;color:var(--cinza-texto);display:flex;align-items:center;gap:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--sucesso);display:inline-block;}
+  .dot.loading{background:var(--alerta);animation:pulse 1s infinite;}
+  .dot.error{background:var(--erro);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  #content{padding:32px;flex:1;}
+  .page{display:none;}.page.active{display:block;}
+  .page-header{margin-bottom:28px;}
+  .page-header h1{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--verde);line-height:1.25;}
+  .page-header p{font-size:.88rem;color:var(--cinza-texto);margin-top:5px;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:16px;margin-bottom:28px;}
+  .kpi-card{background:var(--branco);border-radius:10px;padding:20px 20px 16px;border:1px solid var(--cinza-suave);position:relative;overflow:hidden;}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(135deg,var(--dourado),var(--dourado-deep));}
+  .kpi-label{font-size:.75rem;font-weight:500;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  .kpi-value{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--verde);line-height:1;}
+  .kpi-sub{font-size:.72rem;color:var(--cinza-texto);margin-top:6px;}
+  .panel{background:var(--branco);border-radius:10px;border:1px solid var(--cinza-suave);overflow:hidden;margin-bottom:24px;}
+  .panel-header{padding:16px 20px;border-bottom:1px solid var(--cinza-suave);display:flex;align-items:center;justify-content:space-between;}
+  .panel-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--verde);}
+  .panel-body{padding:20px;}
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;}
+  thead th{background:var(--verde);color:var(--dourado);padding:11px 14px;text-align:left;font-size:.75rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--cinza-suave);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--off-white);}
+  tbody td{padding:10px 14px;color:var(--texto);vertical-align:middle;font-size:.85rem;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;white-space:nowrap;}
+  .badge-frio{background:#EBF5FF;color:#1A6FA8;}
+  .badge-morno{background:#FFF4E0;color:#A06010;}
+  .badge-quente{background:#E8F8EE;color:#1A6B3A;}
+  .badge-cliente{background:linear-gradient(135deg,#f8e38c,#d7ae4d);color:#1A3C2E;}
+  .badge-pub{background:#E8F8EE;color:#1A6B3A;}
+  .badge-ras{background:#FFF4E0;color:#A06010;}
+  .badge-ativo{background:#E8F8EE;color:#1A6B3A;}
+  .badge-pend{background:#F0F0F0;color:#555;}
+  .filter-bar{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+  .search-input{padding:8px 14px;border:1px solid var(--cinza-suave);border-radius:7px;font-size:.875rem;font-family:'Inter',sans-serif;color:var(--texto);background:var(--branco);flex:1;min-width:200px;outline:none;transition:border-color .18s;}
+  .search-input:focus{border-color:var(--verde-claro);}
+  .filter-select{padding:8px 14px;border:1px solid var(--cinza-suave);border-radius:7px;font-size:.875rem;font-family:'Inter',sans-serif;color:var(--texto);background:var(--branco);outline:none;cursor:pointer;}
+  .count-label{font-size:.82rem;color:var(--cinza-texto);white-space:nowrap;padding:8px 0;}
+  .progress-wrap{display:flex;align-items:center;gap:12px;}
+  .progress-bar{flex:1;height:7px;background:var(--cinza-suave);border-radius:4px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(135deg,var(--dourado),var(--dourado-deep));border-radius:4px;transition:width .6s ease;}
+  .progress-pct{font-size:.78rem;font-weight:600;color:var(--verde);width:38px;text-align:right;}
+  .kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;}
+  .kanban-col{min-width:160px;background:var(--off-white);border-radius:8px;padding:12px;border:1px solid var(--cinza-suave);}
+  .kanban-col-title{font-size:.72rem;font-weight:600;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--dourado);display:flex;justify-content:space-between;align-items:center;}
+  .kanban-count{background:var(--verde);color:var(--dourado);border-radius:10px;padding:1px 8px;font-size:.68rem;font-weight:700;}
+  .kanban-card{background:var(--branco);border-radius:6px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--cinza-suave);font-size:.8rem;color:var(--texto);line-height:1.4;}
+  .kanban-card .card-seg{font-size:.68rem;color:var(--cinza-texto);margin-top:4px;}
+  .loading-state,.empty-state{text-align:center;padding:48px 24px;color:var(--cinza-texto);font-size:.9rem;}
+  .loading-spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--cinza-suave);border-top-color:var(--verde);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .seg-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.7rem;font-weight:600;background:rgba(46,92,70,.1);color:var(--verde-medio);}
+  .stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--cinza-suave);font-size:.875rem;}
+  .stat-row:last-child{border-bottom:none;}
+  .alert{padding:12px 16px;border-radius:8px;font-size:.85rem;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;}
+  .alert-info{background:#EBF5FF;color:#1A5C8A;border-left:3px solid #1A6FA8;}
+  .alert-warn{background:#FFF4E0;color:#8A5C00;border-left:3px solid #E67E22;}
+  .pagination{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--cinza-suave);font-size:.82rem;color:var(--cinza-texto);}
+  .page-btn{padding:5px 12px;border:1px solid var(--cinza-suave);border-radius:5px;background:var(--branco);cursor:pointer;font-size:.82rem;transition:all .15s;}
+  .page-btn:hover{background:var(--verde);color:var(--dourado);border-color:var(--verde);}
+  .page-btn.active{background:var(--verde);color:var(--dourado);border-color:var(--verde);}
+  .page-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .debug-panel{background:#1a1a1a;color:#f8e38c;padding:16px;border-radius:8px;font-size:.78rem;font-family:monospace;margin-bottom:16px;max-height:200px;overflow-y:auto;display:none;}
+</style>
+</head>
+<body>
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-title">VIDA Relationship<br>Intelligence™</div>
+    <div class="brand-sub">Ivan Vianna · CFP®</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Visão geral</div>
+    <a class="nav-item active" onclick="showPage('dashboard',this)" href="#">◈ Dashboard</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Relacionamentos</div>
+    <a class="nav-item" onclick="showPage('base',this)" href="#">◉ Base de contatos</a>
+    <a class="nav-item" onclick="showPage('pipeline',this)" href="#">◐ Pipeline</a>
+    <a class="nav-item" onclick="showPage('macons',this)" href="#">◇ Irmãos Maçons</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Conteúdo</div>
+    <a class="nav-item" onclick="showPage('biblioteca',this)" href="#">▤ Biblioteca</a>
+    <a class="nav-item" onclick="showPage('calendario',this)" href="#">▦ Calendário de disparos</a>
+    <a class="nav-item" onclick="showPage('envios',this)" href="#">▷ Registro de envios</a>
+  </div>
+  <div class="sidebar-footer">Ivan Vianna · CFP®<br>Planejador financeiro<br>Arquiteto de patrimônio<br><span style="opacity:.5">ivanviannafinancas.com.br</span></div>
+</nav>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="sync-status"><span class="dot" id="sync-dot"></span><span id="sync-label">Carregando...</span></div>
+      <button class="sync-btn" onclick="loadAllData()">↻ Sincronizar</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header"><h1>Dashboard</h1><p>Visão consolidada da base e das campanhas ativas</p></div>
+      <div id="debug-panel" class="debug-panel"></div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Total conexões</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">Base LinkedIn completa</div></div>
+        <div class="kpi-card"><div class="kpi-label">Com e-mail</div><div class="kpi-value" id="kpi-email">—</div><div class="kpi-sub">Prontos para campanha</div></div>
+        <div class="kpi-card"><div class="kpi-label">Irmãos Maçons</div><div class="kpi-value" id="kpi-macons">—</div><div class="kpi-sub">Canal de alta confiança</div></div>
+        <div class="kpi-card"><div class="kpi-label">Advogados</div><div class="kpi-value" id="kpi-adv">—</div><div class="kpi-sub">Segmento jurídico</div></div>
+        <div class="kpi-card"><div class="kpi-label">Saúde</div><div class="kpi-value" id="kpi-sau">—</div><div class="kpi-sub">Médicos e gestores</div></div>
+        <div class="kpi-card"><div class="kpi-label">Contadores</div><div class="kpi-value" id="kpi-cont">—</div><div class="kpi-sub">Escritórios contábeis</div></div>
+      </div>
+      <div class="two-col">
+        <div class="panel"><div class="panel-header"><div class="panel-title">Cobertura de e-mail por segmento</div></div><div class="panel-body" id="coverage-panel"><div class="loading-state"><div class="loading-spinner"></div><br>Carregando...</div></div></div>
+        <div class="panel"><div class="panel-header"><div class="panel-title">Próximos disparos</div></div><div class="panel-body" id="proximos-panel"><div class="loading-state"><div class="loading-spinner"></div><br>Carregando...</div></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Biblioteca — últimos conteúdos</div></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Título</th><th>Tipo</th><th>Segmento-alvo</th><th>Status</th></tr></thead><tbody id="bib-preview"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- BASE -->
+    <div class="page" id="page-base">
+      <div class="page-header"><h1>Base de contatos</h1><p>Todas as conexões LinkedIn com e-mail identificado</p></div>
+      <div class="filter-bar">
+        <input class="search-input" id="base-search" placeholder="Buscar por nome, empresa ou cargo..." oninput="filterBase()">
+        <select class="filter-select" id="base-seg" onchange="filterBase()">
+          <option value="">Todos os segmentos</option>
+          <option value="macons">Irmãos Maçons</option>
+          <option value="adv">Advogados</option>
+          <option value="sau">Saúde</option>
+          <option value="cont">Contadores</option>
+          <option value="todas">Demais conexões</option>
+        </select>
+        <select class="filter-select" id="base-email" onchange="filterBase()">
+          <option value="">Com e sem e-mail</option>
+          <option value="sim">Somente com e-mail</option>
+          <option value="nao">Sem e-mail</option>
+        </select>
+        <span class="count-label" id="base-count">—</span>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Empresa</th><th>Segmento</th><th>LinkedIn</th></tr></thead><tbody id="base-tbody"></tbody></table></div>
+        <div class="pagination" id="base-pagination"></div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="page" id="page-pipeline">
+      <div class="page-header"><h1>Pipeline</h1><p>Gestão de leads por estágio e temperatura</p></div>
+      <div class="alert alert-info">◈ Cadastre leads na aba <strong>Pipeline</strong> do Google Sheets. Os dados aparecem aqui após sincronização.</div>
+      <div class="panel"><div class="panel-body"><div class="kanban" id="kanban-board"><div class="loading-state"><div class="loading-spinner"></div><br>Carregando...</div></div></div></div>
+    </div>
+
+    <!-- MAÇONS -->
+    <div class="page" id="page-macons">
+      <div class="page-header"><h1>Irmãos Maçons</h1><p>Base de contatos maçônicos — canal de alta confiança</p></div>
+      <div class="filter-bar">
+        <input class="search-input" id="mac-search" placeholder="Buscar por nome, cargo ou empresa..." oninput="filterMacons()">
+        <select class="filter-select" id="mac-email" onchange="filterMacons()">
+          <option value="">Com e sem e-mail</option>
+          <option value="sim">Somente com e-mail</option>
+        </select>
+        <span class="count-label" id="mac-count">—</span>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Celular</th><th>Cargo</th><th>Empresa</th><th>Último contato</th><th>LinkedIn</th></tr></thead><tbody id="mac-tbody"></tbody></table></div>
+        <div class="pagination" id="mac-pagination"></div>
+      </div>
+    </div>
+
+    <!-- BIBLIOTECA -->
+    <div class="page" id="page-biblioteca">
+      <div class="page-header"><h1>Biblioteca de conteúdo</h1><p>Controle de artigos, scanners e diagnósticos por segmento</p></div>
+      <div class="filter-bar">
+        <input class="search-input" id="bib-search" placeholder="Buscar por título ou tema..." oninput="filterBib()">
+        <select class="filter-select" id="bib-tipo" onchange="filterBib()">
+          <option value="">Todos os tipos</option>
+          <option value="Artigo">Artigo LinkedIn</option>
+          <option value="Scanner">Scanner</option>
+          <option value="Diagnostico">Diagnóstico</option>
+          <option value="Newsletter">Newsletter</option>
+        </select>
+        <select class="filter-select" id="bib-status" onchange="filterBib()">
+          <option value="">Todos os status</option>
+          <option value="Publicado">Publicado</option>
+          <option value="Rascunho">Rascunho</option>
+          <option value="Ativo">Ativo</option>
+        </select>
+        <span class="count-label" id="bib-count">—</span>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Título</th><th>Tipo</th><th>Tema</th><th>Segmentos-alvo</th><th>Data</th><th>Status</th><th>Link</th></tr></thead><tbody id="bib-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CALENDÁRIO -->
+    <div class="page" id="page-calendario">
+      <div class="page-header"><h1>Calendário de disparos</h1><p>Planejamento de envios por segmento e tipo de conteúdo</p></div>
+      <div class="panel">
+        <div class="tbl-wrap"><table><thead><tr><th>Data prevista</th><th>Segmento</th><th>Tipo</th><th>Conteúdo</th><th>Link</th><th>Status</th><th>Observações</th></tr></thead><tbody id="cal-tbody"><tr><td colspan="7"><div class="loading-state"><div class="loading-spinner"></div></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ENVIOS -->
+    <div class="page" id="page-envios">
+      <div class="page-header"><h1>Registro de envios</h1><p>Histórico de campanhas com métricas do Brevo</p></div>
+      <div class="alert alert-warn">▷ Após cada campanha no Brevo, registre os resultados na aba <strong>Registro de Envios</strong> do Google Sheets.</div>
+      <div class="panel">
+        <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Data</th><th>Segmento</th><th>Conteúdo</th><th>Enviados</th><th>Entregues</th><th>Aberturas</th><th>Tx abertura</th><th>Cliques</th><th>Tx clique</th><th>Respostas</th></tr></thead><tbody id="env-tbody"><tr><td colspan="11"><div class="loading-state"><div class="loading-spinner"></div></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1yvRrVnnyHdItmaYYKP_w3SyKYKnvEwdWN7hLcaep8Gk';
+const BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=`;
+let D = { todas:[], macons:[], contadores:[], advogados:[], saude:[], pipeline:[], biblioteca:[], calendario:[], envios:[] };
+let dbg = [];
+
+function log(msg){ dbg.push(msg); }
+
+// ── Flexible column getter ─────────────────────────────────────────────────
+function get(row, ...keys){
+  for(const k of keys){
+    if(row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
+    // try case-insensitive
+    const kl = k.toLowerCase();
+    const found = Object.keys(row).find(rk => rk.toLowerCase() === kl);
+    if(found && row[found] !== undefined && row[found] !== null && row[found] !== '') return row[found];
+  }
+  return '';
+}
+
+// ── Fetch sheet ────────────────────────────────────────────────────────────
+async function fetchSheet(name){
+  try {
+    const url = BASE_URL + encodeURIComponent(name);
+    const r = await fetch(url);
+    const txt = await r.text();
+    // Google wraps in /*O_o*/\ngoogle.visualization.Query.setResponse({...});
+    const start = txt.indexOf('{');
+    const end   = txt.lastIndexOf('}');
+    if(start === -1 || end === -1){ log(`[${name}] parse fail`); return []; }
+    const json = JSON.parse(txt.slice(start, end+1));
+    if(!json.table || !json.table.rows){ log(`[${name}] no table`); return []; }
+    const cols = json.table.cols.map(c => c.label || c.id || '');
+    log(`[${name}] cols: ${cols.join(' | ')}`);
+    const rows = json.table.rows.map(row => {
+      const obj = {};
+      if(row.c) row.c.forEach((cell, i) => {
+        obj[cols[i]] = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
+      });
+      return obj;
+    });
+    log(`[${name}] ${rows.length} rows`);
+    return rows;
+  } catch(e){ log(`[${name}] error: ${e.message}`); return []; }
+}
+
+// ── Load all ───────────────────────────────────────────────────────────────
+async function loadAllData(){
+  dbg = [];
+  setSyncStatus('loading','Sincronizando...');
+  try {
+    const names = [
+      'Todas as Conexões','Irmãos Maçons','Contadores e Contab.',
+      'Advogados e Advocacia','Saúde','Pipeline',
+      'Biblioteca de Conteudo','Calendario de Disparos','Registro de Envios'
+    ];
+    const [todas,macons,cont,adv,sau,pipe,bib,cal,env] = await Promise.all(names.map(fetchSheet));
+
+    D.todas      = todas;
+    D.macons     = macons;
+    D.contadores = cont;
+    D.advogados  = adv;
+    D.saude      = sau;
+    D.pipeline   = pipe.filter(r => get(r,'Nome completo','Nome','ID'));
+    D.biblioteca = bib.filter(r => get(r,'Titulo do conteudo','ID'));
+    D.calendario = cal.filter(r => get(r,'Data prevista','Segmento'));
+    D.envios     = env.filter(r => get(r,'ID envio','Data envio'));
+
+    // show debug
+    const dp = document.getElementById('debug-panel');
+    if(dbg.some(l => l.includes('error') || l.includes('fail') || l.includes('no table'))){
+      dp.style.display = 'block';
+      dp.innerHTML = dbg.map(l=>`<div>${l}</div>`).join('');
+    } else { dp.style.display = 'none'; }
+
+    renderDashboard();
+    renderBase();
+    renderMacons();
+    renderBib();
+    renderCalendario();
+    renderEnvios();
+    renderPipeline();
+    setSyncStatus('ok','Dados atualizados');
+  } catch(e){
+    setSyncStatus('error','Erro ao carregar');
+    const dp = document.getElementById('debug-panel');
+    dp.style.display='block';
+    dp.innerHTML = dbg.map(l=>`<div>${l}</div>`).join('') + `<div style="color:red">ERRO: ${e.message}</div>`;
+  }
+}
+
+function setSyncStatus(state,label){
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'dot' + (state==='loading'?' loading':state==='error'?' error':'');
+  lbl.textContent = label;
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+const pageTitles = {dashboard:'Dashboard',base:'Base de contatos',pipeline:'Pipeline',macons:'Irmãos Maçons',biblioteca:'Biblioteca de conteúdo',calendario:'Calendário de disparos',envios:'Registro de envios'};
+function showPage(id,el){
+  event.preventDefault();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[id]||'';
+  if(el) el.classList.add('active');
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function fmt(n){ return n ? Number(String(n).replace(/[^\d]/g,'')).toLocaleString('pt-BR') : '0'; }
+function hasEmail(r){ const e = get(r,'Email','Email (CRM)','E-mail','email'); return e && String(e).includes('@'); }
+function getEmail(r){ return get(r,'Email','Email (CRM)','E-mail','email'); }
+function getName(r){ return (get(r,'Nome completo') || (get(r,'Nome','Nome (LinkedIn)')+' '+get(r,'Sobrenome')).trim()); }
+function badgeTemp(t){ const m={'Frio':'badge-frio','Morno':'badge-morno','Quente':'badge-quente','Cliente':'badge-cliente'}; return `<span class="badge ${m[t]||'badge-frio'}">${t||'Frio'}</span>`; }
+function badgeStatus(s){ const k=Object.keys({Publicado:'badge-pub',Rascunho:'badge-ras',Ativo:'badge-ativo',Pendente:'badge-pend'}).find(k=>(s||'').includes(k)); return `<span class="badge ${k?{Publicado:'badge-pub',Rascunho:'badge-ras',Ativo:'badge-ativo',Pendente:'badge-pend'}[k]:'badge-pend'}">${s||'—'}</span>`; }
+function linkLI(url){ return url&&url.includes('http') ? `<a href="${url}" target="_blank" style="color:var(--verde-claro);font-size:.78rem;text-decoration:none">↗</a>` : '—'; }
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const eT=D.todas.filter(hasEmail).length, eM=D.macons.filter(hasEmail).length,
+        eA=D.advogados.filter(hasEmail).length, eS=D.saude.filter(hasEmail).length,
+        eC=D.contadores.filter(hasEmail).length;
+  const totalEmail = eT+eM+eA+eS+eC;
+  document.getElementById('kpi-total').textContent  = fmt(D.todas.length);
+  document.getElementById('kpi-email').textContent  = fmt(totalEmail);
+  document.getElementById('kpi-macons').textContent = fmt(D.macons.length);
+  document.getElementById('kpi-adv').textContent    = fmt(D.advogados.length);
+  document.getElementById('kpi-sau').textContent    = fmt(D.saude.length);
+  document.getElementById('kpi-cont').textContent   = fmt(D.contadores.length);
+
+  const segs=[{label:'Maçons',t:D.macons.length,e:eM},{label:'Advogados',t:D.advogados.length,e:eA},{label:'Saúde',t:D.saude.length,e:eS},{label:'Contadores',t:D.contadores.length,e:eC},{label:'Demais conexões',t:D.todas.length,e:eT}];
+  document.getElementById('coverage-panel').innerHTML = segs.map(s=>{
+    const pct=s.t>0?Math.round(s.e/s.t*100):0;
+    return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:5px"><span style="font-weight:500">${s.label}</span><span style="color:var(--cinza-texto)">${fmt(s.e)} / ${fmt(s.t)}</span></div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-pct">${pct}%</div></div></div>`;
+  }).join('');
+
+  const prox=D.calendario.filter(r=>get(r,'Status').includes('Pendente')).slice(0,5);
+  document.getElementById('proximos-panel').innerHTML = prox.length
+    ? prox.map(r=>`<div class="stat-row"><div><div style="font-size:.85rem;font-weight:500">${get(r,'Conteudo (titulo)','Conteúdo (título)','Conteudo','Titulo conteudo')}</div><div style="font-size:.75rem;color:var(--cinza-texto);margin-top:2px">${get(r,'Data prevista')} · <span class="seg-pill">${get(r,'Segmento')}</span></div></div>${badgeStatus('Pendente')}</div>`).join('')
+    : '<div class="empty-state">Nenhum disparo pendente cadastrado</div>';
+
+  document.getElementById('bib-preview').innerHTML = D.biblioteca.slice(0,6).map(r=>`<tr><td>${get(r,'Titulo do conteudo','Título do conteúdo','Titulo')||'—'}</td><td><span class="seg-pill">${get(r,'Tipo')||'—'}</span></td><td style="color:var(--cinza-texto);font-size:.8rem">${get(r,'Segmentos-alvo','Segmento')||'—'}</td><td>${badgeStatus(get(r,'Status'))}</td></tr>`).join('')
+    || '<tr><td colspan="4"><div class="empty-state">Nenhum conteúdo cadastrado</div></td></tr>';
+}
+
+// ── Base ───────────────────────────────────────────────────────────────────
+let baseFiltered=[], basePage=1;
+const PER=50;
+
+function buildBaseRows(){
+  const seg=document.getElementById('base-seg').value;
+  let rows=[];
+  const tag=(arr,s)=>arr.map(r=>({...r,_seg:s}));
+  if(!seg||seg==='todas') rows=rows.concat(tag(D.todas,'Demais conexões'));
+  if(!seg||seg==='macons') rows=rows.concat(D.macons.map(r=>({Nome:get(r,'Nome (LinkedIn)','Nome'),Sobrenome:get(r,'Sobrenome'),Email:get(r,'Email (CRM)','Email'),Cargo:get(r,'Cargo'),Empresa:get(r,'Empresa'),'Perfil LinkedIn':get(r,'Perfil LinkedIn'),_seg:'Maçons'})));
+  if(!seg||seg==='adv') rows=rows.concat(tag(D.advogados,'Advogados'));
+  if(!seg||seg==='sau') rows=rows.concat(tag(D.saude,'Saúde'));
+  if(!seg||seg==='cont') rows=rows.concat(tag(D.contadores,'Contadores'));
+  return rows;
+}
+
+function filterBase(){
+  const q=(document.getElementById('base-search').value||'').toLowerCase();
+  const ef=document.getElementById('base-email').value;
+  let rows=buildBaseRows();
+  if(q) rows=rows.filter(r=>(getName(r)+' '+get(r,'Empresa')+' '+get(r,'Cargo')).toLowerCase().includes(q));
+  if(ef==='sim') rows=rows.filter(hasEmail);
+  if(ef==='nao') rows=rows.filter(r=>!hasEmail(r));
+  baseFiltered=rows; basePage=1; renderBasePage();
+}
+function renderBase(){ filterBase(); }
+function renderBasePage(){
+  const sl=baseFiltered.slice((basePage-1)*PER, basePage*PER);
+  document.getElementById('base-count').textContent=`${fmt(baseFiltered.length)} contatos`;
+  document.getElementById('base-tbody').innerHTML=sl.map((r,i)=>{
+    const fill=i%2===0?'var(--off-white)':'';
+    return `<tr style="background:${fill}"><td style="font-weight:500">${getName(r)||'—'}</td><td style="font-size:.8rem;color:var(--cinza-texto)">${getEmail(r)||'—'}</td><td style="font-size:.8rem">${get(r,'Cargo')||'—'}</td><td style="font-size:.8rem">${get(r,'Empresa')||'—'}</td><td><span class="seg-pill">${r._seg||'—'}</span></td><td>${linkLI(get(r,'Perfil LinkedIn'))}</td></tr>`;
+  }).join('')||'<tr><td colspan="6"><div class="empty-state">Nenhum contato encontrado</div></td></tr>';
+  renderPag('base-pagination',baseFiltered.length,PER,basePage,p=>{basePage=p;renderBasePage();});
+}
+
+// ── Maçons ─────────────────────────────────────────────────────────────────
+let macFiltered=[], macPage=1;
+function filterMacons(){
+  const q=(document.getElementById('mac-search').value||'').toLowerCase();
+  const ef=document.getElementById('mac-email').value;
+  let rows=D.macons;
+  if(q) rows=rows.filter(r=>(getName(r)+' '+get(r,'Cargo')+' '+get(r,'Empresa')).toLowerCase().includes(q));
+  if(ef==='sim') rows=rows.filter(hasEmail);
+  macFiltered=rows; macPage=1; renderMacPage();
+}
+function renderMacons(){ filterMacons(); }
+function renderMacPage(){
+  const sl=macFiltered.slice((macPage-1)*PER,macPage*PER);
+  document.getElementById('mac-count').textContent=`${fmt(macFiltered.length)} contatos`;
+  document.getElementById('mac-tbody').innerHTML=sl.map((r,i)=>{
+    const fill=i%2===0?'var(--off-white)':'';
+    const nome=(get(r,'Nome (LinkedIn)','Nome')+' '+get(r,'Sobrenome')).trim();
+    return `<tr style="background:${fill}"><td style="font-weight:500">${nome||'—'}</td><td style="font-size:.8rem;color:var(--cinza-texto)">${get(r,'Email (CRM)','Email')||'—'}</td><td style="font-size:.8rem">${get(r,'Celular (CRM)','Celular')||'—'}</td><td style="font-size:.8rem">${get(r,'Cargo')||'—'}</td><td style="font-size:.8rem">${get(r,'Empresa')||'—'}</td><td style="font-size:.78rem;color:var(--cinza-texto)">${get(r,'Data contato (CRM)','Data contato')||'—'}</td><td>${linkLI(get(r,'Perfil LinkedIn'))}</td></tr>`;
+  }).join('')||'<tr><td colspan="7"><div class="empty-state">Nenhum contato encontrado</div></td></tr>';
+  renderPag('mac-pagination',macFiltered.length,PER,macPage,p=>{macPage=p;renderMacPage();});
+}
+
+// ── Biblioteca ─────────────────────────────────────────────────────────────
+let bibFiltered=[];
+function filterBib(){
+  const q=(document.getElementById('bib-search').value||'').toLowerCase();
+  const tipo=document.getElementById('bib-tipo').value;
+  const stat=document.getElementById('bib-status').value;
+  let rows=D.biblioteca;
+  if(q) rows=rows.filter(r=>(get(r,'Titulo do conteudo','Título do conteúdo','Titulo')+' '+get(r,'Tema principal','Tema')).toLowerCase().includes(q));
+  if(tipo) rows=rows.filter(r=>get(r,'Tipo').includes(tipo));
+  if(stat) rows=rows.filter(r=>get(r,'Status').includes(stat));
+  bibFiltered=rows;
+  document.getElementById('bib-count').textContent=`${bibFiltered.length} conteúdos`;
+  document.getElementById('bib-tbody').innerHTML=bibFiltered.map((r,i)=>{
+    const fill=i%2===0?'var(--off-white)':'';
+    const titulo=get(r,'Titulo do conteudo','Título do conteúdo','Titulo')||'—';
+    const link=get(r,'Link URL','Link')||'';
+    return `<tr style="background:${fill}"><td style="color:var(--cinza-texto);font-size:.78rem">${get(r,'ID')||'—'}</td><td style="font-weight:500;max-width:260px">${titulo}</td><td><span class="seg-pill">${get(r,'Tipo')||'—'}</span></td><td style="font-size:.8rem;color:var(--cinza-texto)">${get(r,'Tema principal','Tema')||'—'}</td><td style="font-size:.8rem">${get(r,'Segmentos-alvo','Segmento')||'—'}</td><td style="font-size:.78rem;color:var(--cinza-texto)">${get(r,'Data publicacao','Data publicação','Data')||'—'}</td><td>${badgeStatus(get(r,'Status'))}</td><td>${link?`<a href="${link}" target="_blank" style="color:var(--verde-claro);font-size:.78rem;text-decoration:none">↗ Ver</a>`:'—'}</td></tr>`;
+  }).join('')||'<tr><td colspan="8"><div class="empty-state">Nenhum conteúdo encontrado</div></td></tr>';
+}
+function renderBib(){ filterBib(); }
+
+// ── Calendário ─────────────────────────────────────────────────────────────
+function renderCalendario(){
+  document.getElementById('cal-tbody').innerHTML=D.calendario.length
+    ? D.calendario.map((r,i)=>{
+        const fill=i%2===0?'var(--off-white)':'';
+        const link=get(r,'Link')||'';
+        const titulo=get(r,'Conteudo (titulo)','Conteúdo (título)','Conteudo','Titulo conteudo')||'—';
+        return `<tr style="background:${fill}"><td style="font-weight:500;white-space:nowrap">${get(r,'Data prevista')||'—'}</td><td><span class="seg-pill">${get(r,'Segmento')||'—'}</span></td><td style="font-size:.8rem">${get(r,'Tipo de email','Tipo')||'—'}</td><td style="font-size:.85rem;max-width:240px">${titulo}</td><td>${link?`<a href="${link}" target="_blank" style="color:var(--verde-claro);font-size:.78rem;text-decoration:none">↗</a>`:'—'}</td><td>${badgeStatus(get(r,'Status'))}</td><td style="font-size:.78rem;color:var(--cinza-texto)">${get(r,'Observacoes','Observações')||''}</td></tr>`;
+      }).join('')
+    : '<tr><td colspan="7"><div class="empty-state">Nenhum disparo cadastrado</div></td></tr>';
+}
+
+// ── Envios ─────────────────────────────────────────────────────────────────
+function renderEnvios(){
+  document.getElementById('env-tbody').innerHTML=D.envios.length
+    ? D.envios.map((r,i)=>{
+        const fill=i%2===0?'var(--off-white)':'';
+        const env=Number(get(r,'Total enviados'))||0;
+        const abr=Number(get(r,'Aberturas'))||0;
+        const cli=Number(get(r,'Cliques'))||0;
+        const txA=env>0&&abr>0?(abr/env*100).toFixed(1)+'%':(get(r,'Taxa abertura','Taxa abertura (%)')||'—');
+        const txC=env>0&&cli>0?(cli/env*100).toFixed(1)+'%':(get(r,'Taxa clique','Taxa clique (%)')||'—');
+        return `<tr style="background:${fill}"><td style="font-size:.78rem;color:var(--cinza-texto)">${get(r,'ID envio')||'—'}</td><td style="white-space:nowrap;font-size:.82rem">${get(r,'Data envio')||'—'}</td><td><span class="seg-pill">${get(r,'Segmento')||'—'}</span></td><td style="font-size:.82rem;max-width:180px">${get(r,'Titulo conteudo','Título conteúdo')||'—'}</td><td style="text-align:right">${fmt(env)}</td><td style="text-align:right">${fmt(get(r,'Entregues'))}</td><td style="text-align:right">${abr||'—'}</td><td style="text-align:right;font-weight:600;color:var(--verde)">${txA}</td><td style="text-align:right">${cli||'—'}</td><td style="text-align:right;font-weight:600;color:var(--verde)">${txC}</td><td style="text-align:right">${get(r,'Respostas')||'—'}</td></tr>`;
+      }).join('')
+    : '<tr><td colspan="11"><div class="empty-state">Nenhum envio registrado</div></td></tr>';
+}
+
+// ── Pipeline ───────────────────────────────────────────────────────────────
+function renderPipeline(){
+  const estagios=['Novo lead','Email 1 enviado','Abriu','Respondeu','Reuniao agendada','Diagnostico','Proposta','Cliente'];
+  const board=document.getElementById('kanban-board');
+  if(!D.pipeline.length){
+    board.innerHTML=`<div class="alert alert-info" style="width:100%">Nenhum lead cadastrado. Adicione na aba <strong>Pipeline</strong> do Google Sheets e clique em Sincronizar.</div>`;
+    return;
+  }
+  board.innerHTML=estagios.map(est=>{
+    const leads=D.pipeline.filter(r=>{const e=get(r,'Estagio','Estágio')||''; return e.toLowerCase().includes(est.toLowerCase());});
+    return `<div class="kanban-col"><div class="kanban-col-title">${est}<span class="kanban-count">${leads.length}</span></div>${leads.map(r=>`<div class="kanban-card"><div style="font-weight:500">${getName(r)||'—'}</div><div class="card-seg">${get(r,'Segmento')||''} · ${badgeTemp(get(r,'Temperatura'))}</div></div>`).join('')||'<div style="font-size:.75rem;color:var(--cinza-texto);text-align:center;padding:8px 0">—</div>'}</div>`;
+  }).join('');
+}
+
+// ── Pagination ─────────────────────────────────────────────────────────────
+function renderPag(id,total,per,cur,cb){
+  const tp=Math.ceil(total/per);
+  const el=document.getElementById(id);
+  if(tp<=1){el.innerHTML='';return;}
+  let h=`<span>${cur} de ${tp}</span>`;
+  h+=`<button class="page-btn" onclick="(${cb.toString()})(${cur-1})" ${cur===1?'disabled':''}>‹ Anterior</button>`;
+  for(let p=Math.max(1,cur-2);p<=Math.min(tp,cur+2);p++) h+=`<button class="page-btn ${p===cur?'active':''}" onclick="(${cb.toString()})(${p})">${p}</button>`;
+  h+=`<button class="page-btn" onclick="(${cb.toString()})(${cur+1})" ${cur===tp?'disabled':''}>Próxima ›</button>`;
+  el.innerHTML=h;
+}
+
+window.addEventListener('DOMContentLoaded', loadAllData);
+</script>
+</body>
+</html>
